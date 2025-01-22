@@ -8,7 +8,7 @@ SqlHydra is a set of NuGet packages for working with databases in F# with an emp
 * PostgreSQL
 * Oracle
 * SQLite
-* MySQL (recently contributed -- currently exists as a beta release only)
+* MySQL (recently contributed; exists as-is with limited support)
 
 ### SqlHydra.Query
 [SqlHydra.Query](#sqlhydraquery-) provides strongly typed Linq queries against generated types. 
