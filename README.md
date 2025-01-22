@@ -313,8 +313,8 @@ There are two main select builders that you can use to create queries:
 _Be sure to open the namespace to your generated types._
 
 ```F#
-// Use the namespace you provided for your generated types here:
 open SampleApp.AdventureWorks
+open SampleApp.AdventureWorks.HydraBuilders // Generated builders are here
 
 let getErrorNumbers () =
     selectTask openContext {
