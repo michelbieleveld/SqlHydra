@@ -1,6 +1,7 @@
 ﻿module internal SqlHydra.Query.LinqExpressionVisitors
 
 open System
+open System.Data.SqlTypes
 open System.Linq.Expressions
 open System.Reflection
 open SqlKata
@@ -288,6 +289,7 @@ let visitAlias (exp: Expression) =
         | Parameter p -> p.Name
         | _ -> notImpl()
     visit exp
+
 
 let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -> MemberInfo -> string) =
     let rec visit (exp: Expression) (query: Query) : Query =

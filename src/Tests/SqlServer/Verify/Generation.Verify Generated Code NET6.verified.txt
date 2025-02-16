@@ -69,6 +69,8 @@ module HumanResources =
             NationalIDNumber: string
             [<ProviderDbType("NVarChar")>]
             LoginID: string
+            [<ProviderDbType("SqlHierarchyId")>]
+            OrganizationNode: Option<Microsoft.SqlServer.Types.SqlHierarchyId>
             [<ProviderDbType("SmallInt")>]
             OrganizationLevel: Option<int16>
             [<ProviderDbType("NVarChar")>]
@@ -359,6 +361,7 @@ module HumanResources =
             member __.BusinessEntityID = RequiredColumn(reader, getOrdinal, reader.GetInt32, "BusinessEntityID")
             member __.NationalIDNumber = RequiredColumn(reader, getOrdinal, reader.GetString, "NationalIDNumber")
             member __.LoginID = RequiredColumn(reader, getOrdinal, reader.GetString, "LoginID")
+            member __.OrganizationNode = OptionColumn(reader, getOrdinal, reader.GetFieldValue, "OrganizationNode")
             member __.OrganizationLevel = OptionColumn(reader, getOrdinal, reader.GetInt16, "OrganizationLevel")
             member __.JobTitle = RequiredColumn(reader, getOrdinal, reader.GetString, "JobTitle")
             member __.BirthDate = RequiredColumn(reader, getOrdinal, reader.GetDateOnly, "BirthDate")
@@ -376,6 +379,7 @@ module HumanResources =
                     BusinessEntityID = __.BusinessEntityID.Read()
                     NationalIDNumber = __.NationalIDNumber.Read()
                     LoginID = __.LoginID.Read()
+                    OrganizationNode = __.OrganizationNode.Read()
                     OrganizationLevel = __.OrganizationLevel.Read()
                     JobTitle = __.JobTitle.Read()
                     BirthDate = __.BirthDate.Read()
@@ -1242,6 +1246,8 @@ module Production =
     [<CLIMutable>]
     type Document =
         {
+            [<ProviderDbType("SqlHierarchyId")>]
+            DocumentNode: Microsoft.SqlServer.Types.SqlHierarchyId
             [<ProviderDbType("SmallInt")>]
             DocumentLevel: Option<int16>
             [<ProviderDbType("NVarChar")>]
@@ -1395,6 +1401,8 @@ module Production =
         {
             [<ProviderDbType("Int")>]
             ProductID: int
+            [<ProviderDbType("SqlHierarchyId")>]
+            DocumentNode: Microsoft.SqlServer.Types.SqlHierarchyId
             [<ProviderDbType("DateTime")>]
             ModifiedDate: System.DateTime
         }
@@ -1795,6 +1803,7 @@ module Production =
                 if __.CultureID.IsNull() then None else Some(__.Read())
         
         type DocumentReader(reader: Microsoft.Data.SqlClient.SqlDataReader, getOrdinal) =
+            member __.DocumentNode = RequiredColumn(reader, getOrdinal, reader.GetFieldValue, "DocumentNode")
             member __.DocumentLevel = OptionColumn(reader, getOrdinal, reader.GetInt16, "DocumentLevel")
             member __.Title = RequiredColumn(reader, getOrdinal, reader.GetString, "Title")
             member __.Owner = RequiredColumn(reader, getOrdinal, reader.GetInt32, "Owner")
@@ -1810,6 +1819,7 @@ module Production =
             member __.ModifiedDate = RequiredColumn(reader, getOrdinal, reader.GetDateTime, "ModifiedDate")
             member __.Read() =
                 {
+                    DocumentNode = __.DocumentNode.Read()
                     DocumentLevel = __.DocumentLevel.Read()
                     Title = __.Title.Read()
                     Owner = __.Owner.Read()
@@ -1825,7 +1835,7 @@ module Production =
                     ModifiedDate = __.ModifiedDate.Read()
                 } : Document
             member __.ReadIfNotNull() =
-                if __.DocumentLevel.IsNull() then None else Some(__.Read())
+                if __.DocumentNode.IsNull() then None else Some(__.Read())
         
         type IllustrationReader(reader: Microsoft.Data.SqlClient.SqlDataReader, getOrdinal) =
             member __.IllustrationID = RequiredColumn(reader, getOrdinal, reader.GetInt32, "IllustrationID")
@@ -1961,10 +1971,12 @@ module Production =
         
         type ProductDocumentReader(reader: Microsoft.Data.SqlClient.SqlDataReader, getOrdinal) =
             member __.ProductID = RequiredColumn(reader, getOrdinal, reader.GetInt32, "ProductID")
+            member __.DocumentNode = RequiredColumn(reader, getOrdinal, reader.GetFieldValue, "DocumentNode")
             member __.ModifiedDate = RequiredColumn(reader, getOrdinal, reader.GetDateTime, "ModifiedDate")
             member __.Read() =
                 {
                     ProductID = __.ProductID.Read()
+                    DocumentNode = __.DocumentNode.Read()
                     ModifiedDate = __.ModifiedDate.Read()
                 } : ProductDocument
             member __.ReadIfNotNull() =
@@ -4097,6 +4109,15 @@ module ext =
             EmailAddress: string
         }
     
+    [<CLIMutable>]
+    type HierarchyIdSupport =
+        {
+            [<ProviderDbType("UniqueIdentifier")>]
+            Id: System.Guid
+            [<ProviderDbType("SqlHierarchyId")>]
+            Hierarchy: Microsoft.SqlServer.Types.SqlHierarchyId
+        }
+    
     module Readers =
         type DateTime2SupportReader(reader: Microsoft.Data.SqlClient.SqlDataReader, getOrdinal) =
             member __.ID = RequiredColumn(reader, getOrdinal, reader.GetInt32, "ID")
@@ -4119,6 +4140,17 @@ module ext =
                     Id = __.Id.Read()
                     EmailAddress = __.EmailAddress.Read()
                 } : GetIdGuidRepro
+            member __.ReadIfNotNull() =
+                if __.Id.IsNull() then None else Some(__.Read())
+        
+        type HierarchyIdSupportReader(reader: Microsoft.Data.SqlClient.SqlDataReader, getOrdinal) =
+            member __.Id = RequiredColumn(reader, getOrdinal, reader.GetGuid, "Id")
+            member __.Hierarchy = RequiredColumn(reader, getOrdinal, reader.GetFieldValue, "Hierarchy")
+            member __.Read() =
+                {
+                    Id = __.Id.Read()
+                    Hierarchy = __.Hierarchy.Read()
+                } : HierarchyIdSupport
             member __.ReadIfNotNull() =
                 if __.Id.IsNull() then None else Some(__.Read())
         
@@ -4234,6 +4266,7 @@ type HydraReader(reader: Microsoft.Data.SqlClient.SqlDataReader) =
     let lazydboErrorLog = lazy (dbo.Readers.ErrorLogReader(reader, buildGetOrdinal typeof<dbo.ErrorLog>))
     let lazyextDateTime2Support = lazy (ext.Readers.DateTime2SupportReader(reader, buildGetOrdinal typeof<ext.DateTime2Support>))
     let lazyextGetIdGuidRepro = lazy (ext.Readers.GetIdGuidReproReader(reader, buildGetOrdinal typeof<ext.GetIdGuidRepro>))
+    let lazyextHierarchyIdSupport = lazy (ext.Readers.HierarchyIdSupportReader(reader, buildGetOrdinal typeof<ext.HierarchyIdSupport>))
     member __.``HumanResources.Department`` = lazyHumanResourcesDepartment.Value
     member __.``HumanResources.Employee`` = lazyHumanResourcesEmployee.Value
     member __.``HumanResources.EmployeeDepartmentHistory`` = lazyHumanResourcesEmployeeDepartmentHistory.Value
@@ -4327,6 +4360,7 @@ type HydraReader(reader: Microsoft.Data.SqlClient.SqlDataReader) =
     member __.``dbo.ErrorLog`` = lazydboErrorLog.Value
     member __.``ext.DateTime2Support`` = lazyextDateTime2Support.Value
     member __.``ext.GetIdGuidRepro`` = lazyextGetIdGuidRepro.Value
+    member __.``ext.HierarchyIdSupport`` = lazyextHierarchyIdSupport.Value
     
     member private __.AccFieldCount with get () = accFieldCount and set (value) = accFieldCount <- value
     
@@ -4518,6 +4552,8 @@ type HydraReader(reader: Microsoft.Data.SqlClient.SqlDataReader) =
         | "ext.DateTime2Support", true -> __.``ext.DateTime2Support``.ReadIfNotNull >> box
         | "ext.GetIdGuidRepro", false -> __.``ext.GetIdGuidRepro``.Read >> box
         | "ext.GetIdGuidRepro", true -> __.``ext.GetIdGuidRepro``.ReadIfNotNull >> box
+        | "ext.HierarchyIdSupport", false -> __.``ext.HierarchyIdSupport``.Read >> box
+        | "ext.HierarchyIdSupport", true -> __.``ext.HierarchyIdSupport``.ReadIfNotNull >> box
         | _ -> failwith $"Could not read type '{entity}' because no generated reader exists." 
     
     static member private GetPrimitiveReader(t: System.Type, reader: Microsoft.Data.SqlClient.SqlDataReader, isOpt: bool, isNullable: bool) =
@@ -4547,6 +4583,7 @@ type HydraReader(reader: Microsoft.Data.SqlClient.SqlDataReader) =
         elif t = typedefof<System.DateTime> then Some(wrapValue reader.GetDateTime)
         elif t = typedefof<byte[]> then Some(wrapRef reader.GetFieldValue<byte[]>)
         elif t = typedefof<obj> then Some(wrapRef reader.GetFieldValue)
+        elif t = typedefof<Microsoft.SqlServer.Types.SqlHierarchyId> then Some(wrapRef reader.GetFieldValue)
         else None
     
     static member Read(reader: Microsoft.Data.SqlClient.SqlDataReader) = 

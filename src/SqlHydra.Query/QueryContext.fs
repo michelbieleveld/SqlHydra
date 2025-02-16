@@ -1,8 +1,11 @@
 namespace SqlHydra.Query
 
 open System
+open System.Data
 open System.Data.Common
 open System.Threading
+open Microsoft.Data.SqlClient
+open Microsoft.SqlServer.Types
 open SqlKata
 
 /// Contains methods that compile and read a query.
@@ -10,7 +13,6 @@ type QueryContext(conn: DbConnection, compiler: SqlKata.Compilers.Compiler) =
     let setProviderDbType (param: DbParameter) (propertyName: string) (providerDbType: string) =
         let property = param.GetType().GetProperty(propertyName)
         let dbTypeSetter = property.GetSetMethod()
-        
         let value = Enum.Parse(property.PropertyType, providerDbType)
         dbTypeSetter.Invoke(param, [|value|]) |> ignore
         
@@ -18,8 +20,12 @@ type QueryContext(conn: DbConnection, compiler: SqlKata.Compilers.Compiler) =
         match qp.ProviderDbType, compiler with
         | Some type', :? SqlKata.Compilers.PostgresCompiler ->
             setProviderDbType param "NpgsqlDbType" type'
+        | Some "SqlHierarchyId", :? SqlKata.Compilers.SqlServerCompiler ->
+            let q = param :?> SqlParameter
+            q.SqlDbType <- SqlDbType.Udt
+            q.UdtTypeName <- "hierarchyid"
         | Some type', :? SqlKata.Compilers.SqlServerCompiler ->
-            setProviderDbType param "SqlDbType" type'
+            setProviderDbType param "SqlDbType" type'    
         | _ -> ()
 
     let mutable logger = fun (r: SqlResult) -> ()
@@ -118,8 +124,9 @@ type QueryContext(conn: DbConnection, compiler: SqlKata.Compilers.Compiler) =
         cmd.CommandText <- compiledQuery.Sql
         for kvp in compiledQuery.NamedBindings do
             let p = cmd.CreateParameter()
+            
             p.ParameterName <- kvp.Key
-
+            
             p.Value <-
                 match kvp.Value with
                 | :? QueryParameter as qp ->
@@ -130,7 +137,7 @@ type QueryContext(conn: DbConnection, compiler: SqlKata.Compilers.Compiler) =
                 
                 // SqlHydra must manually handle DateOnly and TimeOnly conversions of all parameters
                 |> KataUtils.convertIfDateOnlyTimeOnly
-
+           
             cmd.Parameters.Add(p) |> ignore
         cmd
 

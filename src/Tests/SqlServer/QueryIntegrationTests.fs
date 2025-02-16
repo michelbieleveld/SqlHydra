@@ -1,5 +1,7 @@
 ﻿module SqlServer.``Query Integration Tests``
 
+open System
+open System.IO
 open SqlHydra.Query
 open DB
 open NUnit.Framework
@@ -11,6 +13,7 @@ open SqlServer.AdventureWorksNet6
 #if NET8_0
 open SqlServer.AdventureWorksNet8
 #endif
+open Microsoft.SqlServer.Types
 
 let openContext() = 
     let compiler = SqlKata.Compilers.SqlServerCompiler()
@@ -816,6 +819,58 @@ let ``Guid getId Bug Repro Issue 38``() = task {
         }
 
     guid <>! System.Guid.Empty
+}
+
+
+let hierarchyIdToHex (hierarchyId: SqlHierarchyId) =
+    use ms = new MemoryStream()
+    use writer = new BinaryWriter(ms)
+    hierarchyId.Write(writer) // Write the binary representation
+    writer.Flush()
+    let bytes = ms.ToArray()
+    "0x"+ BitConverter.ToString(bytes).Replace("-", "")
+    
+[<Test>]
+let ``HierarchyId not supported for MS SQL Issue 110``() = task {
+    use ctx = openContext()
+    let parent = SqlHierarchyId.Parse("/1/1/")
+    let child = SqlHierarchyId.Parse("/1/1/1/")
+    let id_parent = Guid.NewGuid()
+    let! _ = insertTask ctx {
+        into ext.HierarchyIdSupport
+        entity
+            {
+                ext.HierarchyIdSupport.Id = id_parent
+                ext.HierarchyIdSupport.Hierarchy = parent
+            }
+    }
+    let! _ = insertTask ctx {
+        into ext.HierarchyIdSupport
+        entity
+            {
+                ext.HierarchyIdSupport.Id = Guid.NewGuid()
+                ext.HierarchyIdSupport.Hierarchy = child
+            }
+    }
+    let ancestor = child.GetAncestor(1)
+    let! result = 
+        selectTask HydraReader.Read ctx { 
+            for row in ext.HierarchyIdSupport do
+            where (row.Hierarchy = ancestor)
+            // kata _.WhereRaw($"row.Hierarchy = {hierarchyIdToHex (child.GetAncestor(1))}")
+            count
+        }
+        
+    let! result = 
+        selectTask HydraReader.Read ctx { 
+            for row in ext.HierarchyIdSupport do
+            where (row.Id = id_parent)
+            kata _.WhereRaw($"row.Hierarchy = {hierarchyIdToHex (child.GetAncestor(1))}")
+            count
+        }
+        
+    result =! 1
+    
 }
 
 [<Test>]

@@ -17,6 +17,7 @@
 
     <ItemGroup>
 		<PackageReference Update="FSharp.Core" Version="6.0.1" />
+		<PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     </ItemGroup>
 
 </Project>
