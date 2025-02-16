@@ -3,9 +3,9 @@ namespace SqlHydra.Query
 open System
 open System.Data
 open System.Data.Common
+open System.IO
 open System.Threading
 open Microsoft.Data.SqlClient
-open Microsoft.SqlServer.Types
 open SqlKata
 
 /// Contains methods that compile and read a query.

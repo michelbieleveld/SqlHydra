@@ -852,25 +852,20 @@ let ``HierarchyId not supported for MS SQL Issue 110``() = task {
                 ext.HierarchyIdSupport.Hierarchy = child
             }
     }
-    let ancestor = child.GetAncestor(1)
-    let! result = 
-        selectTask HydraReader.Read ctx { 
-            for row in ext.HierarchyIdSupport do
-            where (row.Hierarchy = ancestor)
-            // kata _.WhereRaw($"row.Hierarchy = {hierarchyIdToHex (child.GetAncestor(1))}")
-            count
-        }
-        
+
     let! result = 
         selectTask HydraReader.Read ctx { 
             for row in ext.HierarchyIdSupport do
             where (row.Id = id_parent)
             kata _.WhereRaw($"row.Hierarchy = {hierarchyIdToHex (child.GetAncestor(1))}")
-            count
+            select row into selected
+            mapList
+                selected.Hierarchy
         }
-        
-    result =! 1
-    
+
+      
+    result.Length =! 1
+    result.Head =! parent
 }
 
 [<Test>]

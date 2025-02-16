@@ -55,16 +55,16 @@ services:
     ports:
       - "54320:5432"
 
-#  oracle:
-#    hostname: oracle
-#    container_name: oracle
-#    build: 
-#      context: ./oracle
-#      dockerfile: Dockerfile.xe
-#    environment:
-#      - ORACLE_PWD=oracle
-#      - ORACLE_ALLOW_REMOTE=true
-#    ports:
-#      - 1521:1521
+  oracle:
+    hostname: oracle
+    container_name: oracle
+    build: 
+      context: ./oracle
+      dockerfile: Dockerfile.xe
+    environment:
+      - ORACLE_PWD=oracle
+      - ORACLE_ALLOW_REMOTE=true
+    ports:
+      - 1521:1521
     
     

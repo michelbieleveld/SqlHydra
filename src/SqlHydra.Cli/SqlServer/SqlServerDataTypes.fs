@@ -2,6 +2,7 @@
 
 open System.Data
 open SqlHydra.Domain
+
 let private r : Microsoft.Data.SqlClient.SqlDataReader = null
 
 // https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-data-type-mappings

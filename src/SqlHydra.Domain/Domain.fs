@@ -1,7 +1,6 @@
 ﻿module SqlHydra.Domain
 
 open System.Data
-open Microsoft.SqlServer.Types
 
 type AppInfo = {
     Name: string
@@ -12,7 +11,7 @@ type AppInfo = {
 let private valueTypes = 
     Set [ "bool"; "int"; "int64"; "int16"; "byte"; "decimal"; "double"; "System.Single"
           "System.DateTimeOffset"; "System.DateTime"; "System.DateOnly"; "System.TimeOnly"
-          "System.Guid"; "Microsoft.SqlServer.Types.SqlHierarchyId"; "SqlHierarchyId" ]
+          "System.Guid"; ]
 
 let isValueType (typeName: string) = 
     valueTypes.Contains typeName
