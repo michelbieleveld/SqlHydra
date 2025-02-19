@@ -3324,7 +3324,7 @@ type HydraReader(reader: Microsoft.Data.SqlClient.SqlDataReader) =
         elif t = typedefof<System.DateTime> then Some(wrapValue reader.GetDateTime)
         elif t = typedefof<byte[]> then Some(wrapRef reader.GetFieldValue<byte[]>)
         elif t = typedefof<obj> then Some(wrapRef reader.GetFieldValue)
-        elif t = typedefof<Microsoft.SqlServer.Types.SqlHierarchyId> then Some(wrapValue reader.GetFieldValue)
+        elif t = typedefof<Microsoft.SqlServer.Types.SqlHierarchyId> then Some(wrapRef reader.GetFieldValue)
         else None
 
     static member Read(reader: Microsoft.Data.SqlClient.SqlDataReader) =

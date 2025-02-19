@@ -852,9 +852,8 @@ let ``HierarchyId not supported for MS SQL Issue 110``() = task {
         selectTask ctx { 
             for row in ext.HierarchyIdSupport do
             where (row.Id = id_parent && areEqual row.Hierarchy node)
-            select row into selected
-            mapList
-                selected.Hierarchy
+            select row.Hierarchy
+            toList
         }
       
     result.Length =! 1
