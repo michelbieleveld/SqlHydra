@@ -27,7 +27,7 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
         
   mssql:
-    # image: mcr.microsoft.com/mssql/server:2019-latest
+    #image: mcr.microsoft.com/mssql/server:2019-latest
     hostname: mssql
     container_name: mssql
     build: 
@@ -37,7 +37,7 @@ services:
       - "12019:1433"    
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=Password#123
+      - SA_PASSWORD=Password#123
       - MSSQL_PID=Express
 
     #extra_hosts:

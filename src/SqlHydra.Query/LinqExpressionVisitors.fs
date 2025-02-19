@@ -1,7 +1,6 @@
 ﻿module internal SqlHydra.Query.LinqExpressionVisitors
 
 open System
-open System.Data.SqlTypes
 open System.Linq.Expressions
 open System.Reflection
 open SqlKata
@@ -290,7 +289,6 @@ let visitAlias (exp: Expression) =
         | _ -> notImpl()
     visit exp
 
-
 let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -> MemberInfo -> string) =
     let rec visit (exp: Expression) (query: Query) : Query =
         match exp with
@@ -359,7 +357,7 @@ let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -
                 | _ -> query.WhereNotLike(fqCol, pattern, false)
             | _ -> notImpl()
 
-        // isNull / isNotNull
+        // isNull / isNotNull fns
         | MethodCall m when List.contains m.Method.Name [ nameof isNullValue; "IsNull"; nameof isNotNullValue ] ->
             match m.Arguments.[0] with
             | Property p -> 
@@ -367,30 +365,6 @@ let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -
                 let fqCol = qualifyColumn alias p.Member
                 if m.Method.Name = nameof isNullValue || m.Method.Name = "IsNull" // CompiledName for `isNull` = `IsNull`
                 then query.WhereNull(fqCol)
-                else query.WhereNotNull(fqCol)
-            | _ -> notImpl()
-
-        // areEqual / notEqual
-        | MethodCall m when List.contains m.Method.Name [ nameof areEqual; nameof notEqual ] ->
-            match m.Arguments.[0], m.Arguments.[1] with
-            | Property p1, Property p2 -> 
-                let alias1 = visitAlias p1.Expression
-                let fqCol1 = qualifyColumn alias1 p1.Member
-                let alias2 = visitAlias p2.Expression
-                let fqCol2 = qualifyColumn alias2 p2.Member
-                let comparison = if m.Method.Name = nameof areEqual then "=" else "<>"
-                query.WhereColumns(fqCol1, comparison, fqCol2)
-            | Property p, Value value | Value value, Property p ->
-                let alias1 = visitAlias p.Expression
-                let fqCol1 = qualifyColumn alias1 p.Member
-                let queryParameter = KataUtils.getQueryParameterForValue p.Member value
-                let comparison = if m.Method.Name = nameof areEqual then "=" else "<>"
-                query.Where(fqCol1, comparison, queryParameter)
-            | Property p, Value null | Value null, Property p ->
-                let alias = visitAlias p.Expression
-                let fqCol = qualifyColumn alias p.Member
-                if m.Method.Name = nameof areEqual
-                then query.WhereNull(fqCol) 
                 else query.WhereNotNull(fqCol)
             | _ -> notImpl()
         
