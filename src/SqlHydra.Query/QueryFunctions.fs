@@ -48,6 +48,12 @@ module Where =
     /// Creates a subquery that returns many values to be used with "isIn", "isNotIn", "|=|" or "|<>|".
     let subqueryMany (query: SelectQuery<'T>) : 'T list = []
 
+    /// Compares two values for equality.
+    let areEqual (prop: 'P) (value: 'P) = true
+
+    /// Compares two values for inequality.
+    let notEqual (prop: 'P) (value: 'P) = true
+
 
 (*
 Select Aggregates:

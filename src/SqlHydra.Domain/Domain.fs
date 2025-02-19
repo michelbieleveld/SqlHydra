@@ -9,7 +9,9 @@ type AppInfo = {
 }
 
 let private valueTypes = 
-    Set [ "bool"; "int"; "int64"; "int16"; "byte"; "decimal"; "double"; "System.Single"; "System.DateTimeOffset"; "System.DateTime"; "System.DateOnly"; "System.TimeOnly"; "System.Guid" ]
+    Set [ "bool"; "int"; "int64"; "int16"; "byte"; "decimal"; "double"; "System.Single"
+          "System.DateTimeOffset"; "System.DateTime"; "System.DateOnly"; "System.TimeOnly"
+          "System.Guid"; ]
 
 let isValueType (typeName: string) = 
     valueTypes.Contains typeName
