@@ -386,6 +386,12 @@ let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -
                 let queryParameter = KataUtils.getQueryParameterForValue p.Member value
                 let comparison = if m.Method.Name = nameof areEqual then "=" else "<>"
                 query.Where(fqCol1, comparison, queryParameter)
+            | Property p, Value null | Value null, Property p ->
+                let alias = visitAlias p.Expression
+                let fqCol = qualifyColumn alias p.Member
+                if m.Method.Name = nameof areEqual
+                then query.WhereNull(fqCol) 
+                else query.WhereNotNull(fqCol)
             | _ -> notImpl()
         
         // Nullable / Option .HasValue / .IsSome `where user.HasValue`; `where user.IsSome`
