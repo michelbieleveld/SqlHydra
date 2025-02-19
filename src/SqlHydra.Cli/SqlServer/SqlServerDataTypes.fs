@@ -2,6 +2,7 @@
 
 open System.Data
 open SqlHydra.Domain
+open Microsoft.SqlServer.Types
 
 let private r : Microsoft.Data.SqlClient.SqlDataReader = null
 
@@ -45,7 +46,7 @@ let supportedTypeMappings isLegacy =
         "ROWVERSION",           "byte[]",                                   DbType.Binary,              Some (nameof SqlDbType.Binary),                 nameof r.GetFieldValue
         "TIMESTAMP",            "byte[]",                                   DbType.Binary,              Some (nameof SqlDbType.Binary),                 nameof r.GetFieldValue
         "SQL_VARIANT",          "obj",                                      DbType.Object,              Some (nameof SqlDbType.Variant),                nameof r.GetFieldValue
-        "HIERARCHYID",          "Microsoft.SqlServer.Types.SqlHierarchyId", DbType.Object,              Some (nameof Microsoft.SqlServer.Types.SqlHierarchyId),                 nameof r.GetFieldValue
+        "HIERARCHYID",          "Microsoft.SqlServer.Types.SqlHierarchyId", DbType.Object,              Some (nameof SqlHierarchyId),                   nameof r.GetFieldValue
         
         // UNSUPPORTED COLUMN TYPES
         //"XML",                "System.Data.SqlTypes.SqlXml",              DbType.Xml,                 None,                                           nameof r.GetSqlXml

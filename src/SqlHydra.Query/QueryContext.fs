@@ -5,7 +5,6 @@ open System.Data
 open System.Data.Common
 open System.IO
 open System.Threading
-open Microsoft.Data.SqlClient
 open SqlKata
 
 /// Contains methods that compile and read a query.
@@ -21,9 +20,8 @@ type QueryContext(conn: DbConnection, compiler: SqlKata.Compilers.Compiler) =
         | Some type', :? SqlKata.Compilers.PostgresCompiler ->
             setProviderDbType param "NpgsqlDbType" type'
         | Some "SqlHierarchyId", :? SqlKata.Compilers.SqlServerCompiler ->
-            let q = param :?> SqlParameter
-            q.SqlDbType <- SqlDbType.Udt
-            q.UdtTypeName <- "hierarchyid"
+            //setProviderDbType param "SqlDbType" "Udt"
+            param.GetType().GetProperty("UdtTypeName").SetValue(param, "hierarchyid") |> ignore
         | Some type', :? SqlKata.Compilers.SqlServerCompiler ->
             setProviderDbType param "SqlDbType" type'    
         | _ -> ()

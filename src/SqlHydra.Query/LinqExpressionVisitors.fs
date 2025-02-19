@@ -359,7 +359,7 @@ let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -
                 | _ -> query.WhereNotLike(fqCol, pattern, false)
             | _ -> notImpl()
 
-        // isNull / isNotNull fns
+        // isNull / isNotNull
         | MethodCall m when List.contains m.Method.Name [ nameof isNullValue; "IsNull"; nameof isNotNullValue ] ->
             match m.Arguments.[0] with
             | Property p -> 
@@ -368,6 +368,17 @@ let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -
                 if m.Method.Name = nameof isNullValue || m.Method.Name = "IsNull" // CompiledName for `isNull` = `IsNull`
                 then query.WhereNull(fqCol)
                 else query.WhereNotNull(fqCol)
+            | _ -> notImpl()
+
+        // areEqual / notEqual
+        | MethodCall m when List.contains m.Method.Name [ nameof areEqual; nameof notEqual ] ->
+            match m.Arguments.[0], m.Arguments.[1] with
+            | Property p, Value value ->
+                let alias1 = visitAlias p.Expression
+                let fqCol1 = qualifyColumn alias1 p.Member
+                let queryParameter = KataUtils.getQueryParameterForValue p.Member value
+                let comparison = if m.Method.Name = nameof areEqual then "=" else "<>"
+                query.Where(fqCol1, comparison, queryParameter)
             | _ -> notImpl()
         
         // Nullable / Option .HasValue / .IsSome `where user.HasValue`; `where user.IsSome`
