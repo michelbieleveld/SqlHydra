@@ -373,7 +373,14 @@ let visitWhere<'T> (filter: Expression<Func<'T, bool>>) (qualifyColumn: string -
         // areEqual / notEqual
         | MethodCall m when List.contains m.Method.Name [ nameof areEqual; nameof notEqual ] ->
             match m.Arguments.[0], m.Arguments.[1] with
-            | Property p, Value value ->
+            | Property p1, Property p2 -> 
+                let alias1 = visitAlias p1.Expression
+                let fqCol1 = qualifyColumn alias1 p1.Member
+                let alias2 = visitAlias p2.Expression
+                let fqCol2 = qualifyColumn alias2 p2.Member
+                let comparison = if m.Method.Name = nameof areEqual then "=" else "<>"
+                query.WhereColumns(fqCol1, comparison, fqCol2)
+            | Property p, Value value | Value value, Property p ->
                 let alias1 = visitAlias p.Expression
                 let fqCol1 = qualifyColumn alias1 p.Member
                 let queryParameter = KataUtils.getQueryParameterForValue p.Member value
